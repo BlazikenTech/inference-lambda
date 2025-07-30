@@ -32,19 +32,19 @@ def free_gpu():
     torch.cuda.ipc_collect()
 
 def download_adapter(bucket: str, key_prefix: str) -> str:
-    """
-    Pull every object under the S3 prefix into a tmp dir and
-    return that directory path.
-    """
-    tmp_dir = tempfile.mkdtemp()
-    paginator = s3.get_paginator("list_objects_v2")
-    for page in paginator.paginate(Bucket=bucket, Prefix=key_prefix):
-        for obj in page.get("Contents", []):
-            key = obj["Key"]
-            local_path = os.path.join(tmp_dir, os.path.relpath(key, key_prefix))
-            os.makedirs(os.path.dirname(local_path), exist_ok=True)
-            s3.download_file(bucket, key, local_path)
-    return tmp_dir
+    tmp = tempfile.mkdtemp()
+    for fname in ("adapter_model.bin", "adapter_config.json",
+                  "tokenizer.json", "tokenizer_config.json",
+                  "special_tokens_map.json"):
+        key = f"{key_prefix}/{fname}"
+        local = os.path.join(tmp, fname)
+        try:
+            s3.download_file(bucket, key, local)
+        except s3.exceptions.NoSuchKey:
+            # ignore optional files
+            continue
+    return tmp
+
 
 # ------------------------------------------------------------------ handler
 def handler(event):
