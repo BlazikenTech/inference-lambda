@@ -46,6 +46,7 @@ def download_adapter(bucket: str, key_prefix: str) -> str:
     return tmp
 
 
+
 # ------------------------------------------------------------------ handler
 def handler(event):
     free_gpu()                        # clean slate
